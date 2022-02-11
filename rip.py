@@ -7,6 +7,7 @@ from makemkv import MakeMKV, ProgressParser
 from pyparsedvd import load_vts_pgci
 import time
 import keyboard
+import shutil
 
 #  .\HandBrakeCLI.exe --preset-import-gui -v -i D:/VIDEO_TS/VTS_02_1.VOB -o movie.mp4 -e x264 -q 20 -B 160 -s "1,2,3,4,5,6" -a "1, 2, 3, 4, 5, 6"
 #  .\HandBrakeCLI.exe -v -i D:/VIDEO_TS --min-duration 120 -t 2 -o test.mp4 --all-audio --all-subtitles
@@ -44,9 +45,11 @@ def listDrives(cdrom_letters):
 
 
 #TODO read volume name using Win32_CDROMDrive
-#if multiple items would be dumped
+#TODO get number of current items
+#TODO dump all
+#TODO compare old and current number if items
+#if we have more than one
     #TODO if directory exists -> count number of items in directory and continue from last item
-    #TODO dump all
     #TODO count number of new items -> compare with old count -> get difference
     #TODO rename them according to the difference
 #if single item will be dumped
@@ -58,6 +61,8 @@ def listDrives(cdrom_letters):
 def continuous(cdrom, directory):
     with ProgressParser() as progress:
         makemkv = MakeMKV(cdrom, progress_handler=progress.parse_progress, minlength=600)
+        
+        item_cnt = 0
         while True:
             #wait for disc to be inserted
             print("Please insert new disc (exit by pressing 'e')")
@@ -68,24 +73,48 @@ def continuous(cdrom, directory):
                     print("Exiting")
                     sys.exit(0)
             print(f'Disc inserted')
-            volume_name = getDrive(cdrom).VolumeName
-            
 
-            #create title name
-            if args.output is not None:
-                title = args.output
-            else:
-                title = disc_info["disc"]["name"]
-                title = title.replace("_", " ")
-                title = title.replace("-", " ")
-                title = title.lower()
-                tmp = title
-                title = ""
-                for word in tmp.split(" "):
-                    word = word[0].upper() + word[1:] + " "
-                    title += word
-                title = title.strip()
+            #check item count
+            item_cnt = len(os.listdir(directory))
 
+            #create title ma,e
+            title = getDrive(cdrom).VolumeName
+            title = title.replace("_", " ")
+            title = title.replace("-", " ")
+            title = title.lower()
+            tmp = title
+            title = ""
+            for word in tmp.split(" "):
+                word = word[0].upper() + word[1:] + " "
+                title += word
+            title = title.strip()
+
+            #dump all
+            makemkv.mkv("all", directory)
+
+            #we have more then one new item
+            item_cnt = len(os.listdir(directory)) - item_cnt
+            if item_cnt > 1:
+                title = title.strip(" 0123456789")
+                sub_directory = directory + "\\" + title
+                episode_cnt = 1
+                if os.path.exists(sub_directory):
+                    dir_len = len(os.listdir(sub_directory))
+                    print(f"Folder already exists and containes '{dir_len}' items")
+                    episode_cnt = dir_len + 1
+                else:
+                    print(f"Creating folder '{title}'")
+                    os.mkdir(sub_directory)
+                print(f"Title:         {title}")
+                print(f"Directory:     {directory}")
+                print(f"Sub directory: {sub_directory}")
+
+                for i in range(0, item_cnt):
+                    current_title = "title_t" + str(i).zfill(2) + ".mkv"
+                    #shutil.move(directory)
+                    os.rename(directory + "\\" + current_title, sub_directory + "\\" + title + " - díl " + str(episode_cnt).zfill(2) + ".mkv")
+                    episode_cnt += 1
+                
             multidiscs = False
             #name file and folder acordingly
             if args.count > 1 or disc_info["title_count"] > 1:
