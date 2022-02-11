@@ -54,6 +54,183 @@ def listDrives(cdrom_letters):
     #todo rename 'title_t00.mkv' to 'volume_name.mkv'
 #TODO reset counters and wait for new disc
 
+
+def continuous(cdrom, directory):
+    with ProgressParser() as progress:
+        makemkv = MakeMKV(cdrom, progress_handler=progress.parse_progress, minlength=600)
+        while True:
+            #wait for disc to be inserted
+            print("Please insert new disc (exit by pressing 'e')")
+            status = None
+            while status != True:
+                status = driveStatus(cdrom)
+                if keyboard.is_pressed("e"):
+                    print("Exiting")
+                    sys.exit(0)
+            print(f'Disc inserted')
+            volume_name = getDrive(cdrom).VolumeName
+            
+
+            #create title name
+            if args.output is not None:
+                title = args.output
+            else:
+                title = disc_info["disc"]["name"]
+                title = title.replace("_", " ")
+                title = title.replace("-", " ")
+                title = title.lower()
+                tmp = title
+                title = ""
+                for word in tmp.split(" "):
+                    word = word[0].upper() + word[1:] + " "
+                    title += word
+                title = title.strip()
+
+            multidiscs = False
+            #name file and folder acordingly
+            if args.count > 1 or disc_info["title_count"] > 1:
+                multidiscs = True
+                title = title.strip(" 0123456789")
+                #print(f"A folder '{title}' needs to be created")
+                directory = directory + "\\" + title
+                if os.path.exists(directory):
+                    if args.continuous:
+                        dir_len = len(os.listdir(directory))
+                        print(f"Folder already exists and containes '{dir_len}' items")
+                        episode_cnt = dir_len + 1
+                    else:
+                        print("Folder already exists. Skipping creation")
+                else:
+                    print(f"Creating folder '{title}'")
+                    os.mkdir(directory)
+            #    title = title + " - díl"
+            #else:
+            #    title += ".mkv"
+
+            print(f"Directory: {directory}")
+            print(f"Title: {title}")
+
+            episode_cnt = 1
+            next_disc = 1
+
+            while True:
+                out = makemkv.mkv("all", directory)
+                print(out)
+                if multidiscs:
+                    for i in range(0, disc_info["title_count"]):
+                        os.rename(directory + "\\" + "title_t" + str(i).zfill(2) + ".mkv", directory + "\\" + title + " - díl " + str(episode_cnt).zfill(2) + ".mkv")
+                        episode_cnt += 1
+                else:
+                    os.rename(directory + "\\" + "title_t00.mkv", directory + "\\" + title + ".mkv")
+
+                ctypes.windll.WINMM.mciSendStringW(u"open " + cdrom + u" type cdaudio alias d_drive", None, 0, None)
+                ctypes.windll.WINMM.mciSendStringW(u"set d_drive door open", None, 0, None)
+
+                if args.count - next_disc < 1:
+                    print("Done")
+                    sys.exit(0)
+                next_disc += 1
+
+                print(f"Please insert disc {next_disc}/{args.count}")
+                print("If you wish to skip this disc, press 's'")
+
+                #wait for disc to be inserted or skip
+                status = None
+                while status != True:
+                    status = driveStatus(cdrom)
+                    if keyboard.is_pressed("e"):
+                        print("Exiting")
+                        break
+                if status != True:
+                    episode_cnt += int(input("How many episodes to skip?: "))
+                    print(f"Next episode will have number '{episode_cnt}'")
+
+                print("Disc inserted")
+
+
+def single(cdrom, directory, args):
+    with ProgressParser() as progress:
+        makemkv = MakeMKV(cdrom, progress_handler=progress.parse_progress, minlength=600)
+        print(f'Disc inserted')
+        #disc_info = makemkv.info()
+
+        #create title name
+        if args.output is not None:
+            title = args.output
+        else:
+            title = disc_info["disc"]["name"]
+            title = title.replace("_", " ")
+            title = title.replace("-", " ")
+            title = title.lower()
+            tmp = title
+            title = ""
+            for word in tmp.split(" "):
+                word = word[0].upper() + word[1:] + " "
+                title += word
+            title = title.strip()
+
+        multidiscs = False
+        #name file and folder acordingly
+        if args.count > 1 or disc_info["title_count"] > 1:
+            multidiscs = True
+            title = title.strip(" 0123456789")
+            #print(f"A folder '{title}' needs to be created")
+            directory = directory + "\\" + title
+            if os.path.exists(directory):
+                if args.continuous:
+                    dir_len = len(os.listdir(directory))
+                    print(f"Folder already exists and containes '{dir_len}' items")
+                    episode_cnt = dir_len + 1
+                else:
+                    print("Folder already exists. Skipping creation")
+            else:
+                print(f"Creating folder '{title}'")
+                os.mkdir(directory)
+        #    title = title + " - díl"
+        #else:
+        #    title += ".mkv"
+
+        print(f"Directory: {directory}")
+        print(f"Title: {title}")
+
+        episode_cnt = 1
+        next_disc = 1
+
+        while True:
+            out = makemkv.mkv("all", directory)
+            print(out)
+            if multidiscs:
+                for i in range(0, disc_info["title_count"]):
+                    os.rename(directory + "\\" + "title_t" + str(i).zfill(2) + ".mkv", directory + "\\" + title + " - díl " + str(episode_cnt).zfill(2) + ".mkv")
+                    episode_cnt += 1
+            else:
+                os.rename(directory + "\\" + "title_t00.mkv", directory + "\\" + title + ".mkv")
+
+            ctypes.windll.WINMM.mciSendStringW(u"open " + cdrom + u" type cdaudio alias d_drive", None, 0, None)
+            ctypes.windll.WINMM.mciSendStringW(u"set d_drive door open", None, 0, None)
+
+            if args.count - next_disc < 1:
+                print("Done")
+                sys.exit(0)
+            next_disc += 1
+
+            print(f"Please insert disc {next_disc}/{args.count}")
+            print("If you wish to skip this disc, press 's'")
+
+            #wait for disc to be inserted or skip
+            status = None
+            while status != True:
+                status = driveStatus(cdrom)
+                if keyboard.is_pressed("s"):
+                    print("Skipping")
+                    break
+            if status != True:
+                episode_cnt += int(input("How many episodes to skip?: "))
+                print(f"Next episode will have number '{episode_cnt}'")
+
+            print("Disc inserted")
+
+
 def main():
     #arguments
     parser = argparse.ArgumentParser()
@@ -71,7 +248,6 @@ def main():
     directory = ""
     
     driveInfo("D:")
-    exit(0)
     
     #get available drives
     cdrom_letters = []
@@ -117,6 +293,11 @@ def main():
     if args.directory is not None:
         directory = args.directory
     
+    if args.continuous:
+        continuous(cdrom, directory)
+    else:
+        single(cdrom, directory, args)
+    sys.exit(0)
     
     #wait for disc to be inserted
     last_status = None
@@ -136,8 +317,6 @@ def main():
     #start rip
     with ProgressParser() as progress:
         makemkv = MakeMKV(cdrom, progress_handler=progress.parse_progress, minlength=600)
-        print(makemkv.mkv("all", "O:\This PC\Documents\\0_Projects\dvd_ripper"))
-        exit(0)
         while True:
             print(f'Disc inserted')
             #disc_info = makemkv.info()
