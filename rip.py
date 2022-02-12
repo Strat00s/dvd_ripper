@@ -199,7 +199,7 @@ def main():
             title += word
         title = title.strip()
 
-        print(f"\nTitle: {title}")
+        print(f"\nTitle:         {title}")
 
         #check item count
         item_cnt = len(os.listdir(directory))
@@ -223,8 +223,8 @@ def main():
                 print(f"Creating folder '{title}'")
                 os.mkdir(sub_directory)
                 print(f"Starting on part '{episode_cnt}'")
-            print(f"Title:         {title}")
-            print(f"Directory:     {directory}")
+            print(f"Title:         {title} - díl xx.mkv")
+            #print(f"Directory:     {directory}")
             print(f"Sub directory: {sub_directory}")
 
             for i in range(0, item_cnt):
