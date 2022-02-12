@@ -245,6 +245,7 @@ def main():
         
         ctypes.windll.WINMM.mciSendStringW(u"open " + cdrom + u" type cdaudio alias d_drive", None, 0, None)
         ctypes.windll.WINMM.mciSendStringW(u"set d_drive door open", None, 0, None)
+        print("Done\n")
 
 if __name__ == '__main__':
     main()
