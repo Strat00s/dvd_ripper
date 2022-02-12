@@ -195,7 +195,8 @@ def main():
         tmp = title
         title = ""
         for word in tmp.split(" "):
-            word = word[0].upper() + word[1:] + " "
+            if len(word) > 1:
+                word = word[0].upper() + word[1:] + " "
             title += word
         title = title.strip()
 
@@ -216,15 +217,15 @@ def main():
             title = title.strip(" 0123456789")
             sub_directory = title
             episode_cnt = 1
-            if os.path.exists(sub_directory):
-                episode_cnt = len(os.listdir(sub_directory)) + 1
-                print(f"Folder '{title}' already exists. Continuing with part '{episode_cnt}'")
+            if os.path.exists(directory + "\\" + sub_directory):
+                episode_cnt = len(os.listdir(directory + "\\" + sub_directory)) + 1
+                print(f"Folder '{sub_directory}' already exists. Continuing with part '{episode_cnt}'")
             else:
-                print(f"Creating folder '{title}'")
-                os.mkdir(sub_directory)
+                print(f"Creating folder '{sub_directory}'")
+                os.mkdir(directory + "\\" + sub_directory)
                 print(f"Starting on part '{episode_cnt}'")
             print(f"Title:         {title} - díl xx.mkv")
-            #print(f"Directory:     {directory}")
+            print(f"Directory:     {directory}")
             print(f"Sub directory: {sub_directory}")
 
             for i in range(0, item_cnt):
