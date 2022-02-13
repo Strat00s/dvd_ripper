@@ -118,9 +118,10 @@ def numberFile(directory, title_name, extension, sub_directory="\\"):
 def main():
     #arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument("-l", "--list",       action="store_true", help="List available drives")
-    parser.add_argument("-i", "--input",      type=str,            help="Input drive to use (eg. F:). If not set and you have only single drive, that one will be used")
-    parser.add_argument("-d", "--directory",  type=str,            help="Directory where to rip the disc(s) (absolute path)")
+    parser.add_argument("-l", "--list",       action="store_true",   help="List available drives")
+    parser.add_argument("-L", "--length",     type=int, default=600, help="Min title length for it to be dumped in seconds (default is 600 second")
+    parser.add_argument("-i", "--input",      type=str,              help="Input drive to use (eg. F:). If not set and you have only single drive, that one will be used")
+    parser.add_argument("-d", "--directory",  type=str,              help="Directory where to rip the disc(s) (absolute path)")
     args = parser.parse_args()
     
     cdrom = ""
@@ -173,7 +174,7 @@ def main():
         directory = args.directory
     
 
-    makemkv = MakeMKV(cdrom, progress_handler=showProgress, minlength=600)
+    makemkv = MakeMKV(cdrom, progress_handler=showProgress, minlength=args.length)
     
     item_cnt = 0
     while True:
@@ -197,6 +198,8 @@ def main():
         for word in tmp.split(" "):
             if len(word) > 1:
                 word = word[0].upper() + word[1:] + " "
+            else:
+                word += " "
             title += word
         title = title.strip()
 
